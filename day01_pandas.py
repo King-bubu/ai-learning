@@ -1,5 +1,5 @@
 import pandas as pd
-df =pd.read_csv("data/成绩数据.csv")
+df = pd.read_csv("data/成绩数据.csv")
 
 print(df.head(2))
 print(df.tail(2))
@@ -12,7 +12,7 @@ print(df.iloc[3])
 
 print(df[df["高数成绩"]>60])
 
-df.groupby("班级")["高数成绩"].mean()
-df.groupby("性别")["高数成绩"].mean()
+print(df.groupby("班级")["高数成绩"].mean())
+print(df.groupby("性别")["高数成绩"].mean())
 
-df.sort_values(by="高数成绩",ascending=False).head(3)
+print(df.sort_values(by="高数成绩", ascending=False).head(3))
