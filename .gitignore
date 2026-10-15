@@ -1,0 +1,6 @@
+# 不需要上传到 GitHub 的东西
+.workbuddy/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
