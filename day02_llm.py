@@ -22,3 +22,6 @@ resp2 = client.chat.completions.create(
 answer2 = resp2.choices[0].message.content
 print(answer1)
 print(answer2)
+# 日志 2026-10-21
+# 学了：本地大模型部署、openai SDK 调用、messages 多轮机制
+# 卡在：messages 变量 vs 参数名的区别（已解决）
