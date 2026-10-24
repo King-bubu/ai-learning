@@ -35,7 +35,7 @@ class ChatBot:
     
     def ask_with_docs(self, question, docs):
         context = self.retrieve(question,docs)
-        prompt = """请只根据下面这段资料回答问题。资料里没有的内容，就回答「资料里没有」。
+        prompt = f"""请只根据下面这段资料回答问题。资料里没有的内容，就回答「资料里没有」。
             资料：{context}
             问题：{question}"""
         return self.ask(prompt)
