@@ -49,3 +49,6 @@ resp2 = client.chat.completions.create(
 )
 answer2 = resp2.choices[0].message.content
 print(answer2)
+#2026-10-23
+#学了：了解了RAG，RAG = 检索出资料塞进 prompt；模型参数没变，变的只是这次输入
+#卡在：第一次看论文，看了好几遍，不认真逐句解析看不懂，朴素检索在小语料上永远"看起来对"，看不出质量问题
