@@ -34,13 +34,25 @@ class ChatBot:
         return answer
     def bigrams(self, text):
         """把一段文字切成所有相邻两字的组合。'显卡显存' → {'显卡','卡显','显存'}"""
+        text = text.replace(" ", "")
+        text = text.replace("我", "")
+        text = text.replace("的", "")
+        text = text.replace("了", "")
+        text = text.replace("怎么办", "")
         return {text[i:i+2] for i in range(len(text) - 1)}
-    def retrieve(self, question, docs):
+    def retrieve(self, question, docs, mode="raw"):
         s=[]
         for i in range(len(docs)):
-            score = len(self.bigrams(docs[i]) & self.bigrams(question))
+            hit = len(self.bigrams(docs[i]) & self.bigrams(question))
+            if mode == "raw":
+                score = hit
+            if mode == "norm":
+                score = hit/len(self.bigrams(docs[i]))
+            if mode == "sqrt":
+                score = hit/(len(self.bigrams(docs[i]))**0.5)
             s.append((score, docs[i]))
-        return max(s)[1]    
+        return max(s)[1]
+
     def ask_with_files(self, question, session_id):
         """先检索、再拼 prompt、再回答"""
         context = self.retrieve(question, self.chunks)      # 1. 从 self.chunks 里检索出最相关的一段
