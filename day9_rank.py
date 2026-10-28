@@ -13,3 +13,6 @@ for i, c in enumerate(cases,1):
             rank = m
             break
     print(f"第{i}题  最高分{top}  并列{tie}段  正确段排第{rank}")
+#2026-10-28
+#学了：把「我觉得」换成了「我量过」，优化检索准确率至 100%
+#卡在：增加新功能时如何着手改代码
