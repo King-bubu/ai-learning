@@ -9,6 +9,13 @@ class ChatBot:
             )
             self.sessions = {}
             self.chunks = self.load_chunks()
+            self.stopwords = ["我", "的", "了", "怎么办", "问", "答", "\n", "?", ":", "。"]
+    def clean(self, text):
+        """只负责清理：去空格 + 去停用词"""
+        text = text.replace(" ", "")
+        for w in self.stopwords:
+            text = text.replace(w, "")
+        return text
     def load_chunks(self):
         """读 docs/ 下所有 txt,按空行切段,返回一个列表"""
         chunks = []
@@ -34,29 +41,30 @@ class ChatBot:
         return answer
     def bigrams(self, text):
         """把一段文字切成所有相邻两字的组合。'显卡显存' → {'显卡','卡显','显存'}"""
-        text = text.replace(" ", "")
-        text = text.replace("我", "")
-        text = text.replace("的", "")
-        text = text.replace("了", "")
-        text = text.replace("怎么办", "")
         return {text[i:i+2] for i in range(len(text) - 1)}
-    def retrieve(self, question, docs, mode="raw"):
-        s=[]
-        for i in range(len(docs)):
-            hit = len(self.bigrams(docs[i]) & self.bigrams(question))
+    def score_all(self, question, docs, mode="raw"):
+        q=self.bigrams(self.clean(question))
+        s = []
+        for i in docs:
+            hit = len(self.bigrams(self.clean(i)) & q)
             if mode == "raw":
                 score = hit
-            if mode == "norm":
-                score = hit/len(self.bigrams(docs[i]))
-            if mode == "sqrt":
-                score = hit/(len(self.bigrams(docs[i]))**0.5)
-            s.append((score, docs[i]))
-        return max(s)[1]
+            elif mode == "norm":
+                score = hit/len(self.bigrams(i))
+            elif mode == "sqrt":
+                score = hit/(len(self.bigrams(i))**0.5)
+            s.append((score, i))
+        return sorted(s, key=lambda x: x[0], reverse = True)
+    def retrieve(self, question, docs, mode="raw", k=1):
+        """返回最相关的 k 段，用换行拼成一个字符串"""
+        ranked = self.score_all(question, docs, mode)
+        top = ranked[:k] 
+        return "\n".join(d for sc, d in top)
 
     def ask_with_files(self, question, session_id):
         """先检索、再拼 prompt、再回答"""
         context = self.retrieve(question, self.chunks)      # 1. 从 self.chunks 里检索出最相关的一段
-        prompt = f"""请只根据下面这段资料回答问题。资料里没有的内容，就回答「资料里没有」。
+        prompt = f"""请只根据下面这些资料回答问题。资料里没有的内容，就回答「资料里没有」。
             资料：{context}
             问题：{question}"""        # 2. 拼 prompt（昨天那句「资料里没有就说资料里没有」别忘了）
         return self.ask(prompt, session_id)     # 3. return self.ask(prompt)
