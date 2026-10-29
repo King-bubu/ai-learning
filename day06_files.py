@@ -9,10 +9,22 @@ class ChatBot:
             )
             self.sessions = {}
             self.chunks = self.load_chunks()
-            self.stopwords = ["我", "的", "了", "怎么办", "问", "答", "\n", "?", ":", "。"]
+            self.stopwords = ["我", "的", "了", "怎么办", "什么"]      # 只放语义虚词
+            self.markers   = ["问", "答"]                       # 文档格式标记，换文档要重看
+            self.punct     = "，。？！：、；（）「」《》——…\n\t .,?!:;()[]{}"   # 标点，一个字符集
     def clean(self, text):
-        """只负责清理：去空格 + 去停用词"""
+        """只负责清理：去行首标记、去空格、去标点、去停用词"""
+        lines = []
+        for line in text.split("\n"):
+            s = line.lstrip()
+            for m in self.markers:
+                if s.startswith(m + "："):          # ← 你补：把 s 的前缀切掉
+                    s = s[len(m)+1:]
+            lines.append(s)
+        text = "\n".join(lines)
         text = text.replace(" ", "")
+        table = str.maketrans("", "", self.punct)
+        text = text.translate(table)
         for w in self.stopwords:
             text = text.replace(w, "")
         return text
@@ -46,13 +58,16 @@ class ChatBot:
         q=self.bigrams(self.clean(question))
         s = []
         for i in docs:
-            hit = len(self.bigrams(self.clean(i)) & q)
+            d = self.bigrams(self.clean(i))
+            hit = len(d & q)
             if mode == "raw":
                 score = hit
             elif mode == "norm":
-                score = hit/len(self.bigrams(i))
+                score = hit/len(d)
             elif mode == "sqrt":
-                score = hit/(len(self.bigrams(i))**0.5)
+                score = hit/(len(d)**0.5)
+            else:
+                raise ValueError(f"未知的 mode: {mode}")
             s.append((score, i))
         return sorted(s, key=lambda x: x[0], reverse = True)
     def retrieve(self, question, docs, mode="raw", k=1):
