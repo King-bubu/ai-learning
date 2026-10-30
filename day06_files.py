@@ -45,7 +45,8 @@ class ChatBot:
         history.append({"role": "user", "content": question})
         resp = self.client.chat.completions.create(
             model = self.model,
-            messages = history
+            messages = history,
+            temperature=0
         )
         answer = resp.choices[0].message.content
         history.append({"role": "assistant", "content": answer})
@@ -70,7 +71,7 @@ class ChatBot:
                 raise ValueError(f"未知的 mode: {mode}")
             s.append((score, i))
         return sorted(s, key=lambda x: x[0], reverse = True)
-    def retrieve(self, question, docs, mode="raw", k=1):
+    def retrieve(self, question, docs, mode="raw", k=2):
         """返回最相关的 k 段，用换行拼成一个字符串"""
         ranked = self.score_all(question, docs, mode)
         top = ranked[:k] 
@@ -78,7 +79,7 @@ class ChatBot:
 
     def ask_with_files(self, question, session_id):
         """先检索、再拼 prompt、再回答"""
-        context = self.retrieve(question, self.chunks)      # 1. 从 self.chunks 里检索出最相关的一段
+        context = self.retrieve(question, self.chunks, k=2)      # 1. 从 self.chunks 里检索出最相关的一段
         prompt = f"""请只根据下面这些资料回答问题。资料里没有的内容，就回答「资料里没有」。
             资料：{context}
             问题：{question}"""        # 2. 拼 prompt（昨天那句「资料里没有就说资料里没有」别忘了）

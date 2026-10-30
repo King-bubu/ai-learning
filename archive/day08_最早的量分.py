@@ -6,7 +6,7 @@ bot = ChatBot()
 for mode in["raw", "norm", "sqrt"]:
     right = len(cases)
     for i ,c in enumerate(cases, 1):
-        hit = bot.retrieve(c["q"], bot.chunks, mode)
+        hit = bot.retrieve(c["q"], bot.chunks, mode, k=1)
         ok = c["expect"] in hit
         print(f"{'✓' if ok else '✗'} 第{i}题[{c['type']}] {c['q']}")
         if not ok:

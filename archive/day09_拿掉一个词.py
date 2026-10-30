@@ -16,7 +16,7 @@ def run(sw):
     bot.stopwords = sw
     bad = []
     for i, c in enumerate(cases, 1):
-        got = bot.retrieve(c["q"], bot.chunks, "raw")
+        got = bot.retrieve(c["q"], bot.chunks, "raw", k = 1)
         if c["expect"] not in got:
             bad.append(i)
     return 10 - len(bad), bad
