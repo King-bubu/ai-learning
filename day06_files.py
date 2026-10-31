@@ -75,15 +75,19 @@ class ChatBot:
         """返回最相关的 k 段，用换行拼成一个字符串"""
         ranked = self.score_all(question, docs, mode)
         top = ranked[:k] 
-        return "\n".join(d for sc, d in top)
+        return "\n---\n".join(d for sc, d in top)
+
+    def build_prompt(self, question, context):
+        """只负责拼 prompt，不碰模型、不碰检索"""
+        prompt = ("请只根据下面这些资料回答问题。资料里没有的内容，就回答「资料里没有」。\n"
+                f"资料：{context}\n"
+                f"问题：{question}")
+        return prompt
 
     def ask_with_files(self, question, session_id):
-        """先检索、再拼 prompt、再回答"""
-        context = self.retrieve(question, self.chunks, k=2)      # 1. 从 self.chunks 里检索出最相关的一段
-        prompt = f"""请只根据下面这些资料回答问题。资料里没有的内容，就回答「资料里没有」。
-            资料：{context}
-            问题：{question}"""        # 2. 拼 prompt（昨天那句「资料里没有就说资料里没有」别忘了）
-        return self.ask(prompt, session_id)     # 3. return self.ask(prompt)
+        context = self.retrieve(question, self.chunks, k=2)
+        prompt = self.build_prompt(question, context)
+        return self.ask(prompt, session_id)
 if __name__ == "__main__":
     try:
         bot = ChatBot()
