@@ -29,16 +29,16 @@ class ChatBot:
             text = text.replace(w, "")
         return text
     def load_chunks(self):
-        """读 docs/ 下所有 txt,按空行切段,返回一个列表"""
+        """读根目录全部 md + docs/ 下的 txt，按空行切段"""
         chunks = []
-        for path in Path("docs").glob("*.txt"):
+        文件 = sorted(Path(".").glob("*.md")) + sorted(Path("docs").glob("*.txt"))
+        for path in 文件:
             text = path.read_text(encoding="utf-8")
-            paras = text.split("\n\n")
-            for i in paras:
-                if i.strip() != "":
-                    chunks.append(i)
+            for para in text.split("\n\n"):
+                if para.strip() != "":
+                    chunks.append(para)
         if len(chunks) == 0:
-            raise FileNotFoundError("⚠️ 启动失败:docs 里没有可用资料\n请检查 docs 文件夹是否和脚本在同一个目录下。")
+            raise FileNotFoundError("⚠️ docs 里没有可用资料")
         return chunks
     def ask(self, question, session_id):
         history = self.sessions.get(session_id, [])
@@ -85,7 +85,7 @@ class ChatBot:
         return prompt
 
     def ask_with_files(self, question, session_id):
-        context = self.retrieve(question, self.chunks, k=2)
+        context = self.retrieve(question, self.chunks, mode="sqrt", k=5)
         prompt = self.build_prompt(question, context)
         return self.ask(prompt, session_id)
 if __name__ == "__main__":
