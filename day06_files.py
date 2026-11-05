@@ -31,12 +31,17 @@ class ChatBot:
     def load_chunks(self):
         """读根目录全部 md + docs/ 下的 txt，按空行切段"""
         chunks = []
-        文件 = sorted(Path(".").glob("*.md")) + sorted(Path("docs").glob("*.txt"))
+        噪音 = {"今日任务.md", "eval_report.md"}   # 过程记录，不是知识，不参与检索
+        文件 = [p for p in sorted(Path(".").glob("*.md")) + sorted(Path("docs").glob("*.txt"))
+                if p.name not in 噪音]
         for path in 文件:
             text = path.read_text(encoding="utf-8")
             for para in text.split("\n\n"):
-                if para.strip() != "":
-                    chunks.append(para)
+                p = para.strip()                      # 先去掉首尾空白，再判断
+                if len(p) < 20:                       # 太短的：标题、---、粗体小标签
+                    continue
+                chunks.append(p)
+
         if len(chunks) == 0:
             raise FileNotFoundError("⚠️ docs 里没有可用资料")
         return chunks
