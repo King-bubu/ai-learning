@@ -29,18 +29,26 @@ class ChatBot:
             text = text.replace(w, "")
         return text
     def load_chunks(self):
-        """读根目录全部 md + docs/ 下的 txt，按空行切段"""
+        """只读知识层：docs/ 的 txt + 根目录两个笔记。日志和总结不进检索。"""
         chunks = []
-        噪音 = {"今日任务.md", "eval_report.md"}   # 过程记录，不是知识，不参与检索
-        文件 = [p for p in sorted(Path(".").glob("*.md")) + sorted(Path("docs").glob("*.txt"))
-                if p.name not in 噪音]
-        for path in 文件:
+        知识文件 = sorted(Path("docs").glob("*.txt")) + [
+            Path("名词本.md"),
+            Path("新手知识点.md"),
+        ]
+        for path in 知识文件:
             text = path.read_text(encoding="utf-8")
-            for para in text.split("\n\n"):
-                p = para.strip()                      # 先去掉首尾空白，再判断
-                if len(p) < 20:                       # 太短的：标题、---、粗体小标签
-                    continue
-                chunks.append(p)
+            段 = [x.strip() for x in text.split("\n\n") if x.strip()]
+            攒 = ""                     # 标题先攒着，不单独入库，粘给下一段正文
+            for s in 段:
+                if s.startswith("#"):
+                    攒 += s + "\n"
+                else:
+                    块 = (攒 + s).strip()
+                    if len(块) >= 20:
+                        chunks.append(块)
+                    攒 = ""
+            if 攒.strip():              # 文件以标题结尾的情况
+                chunks.append(攒)
 
         if len(chunks) == 0:
             raise FileNotFoundError("⚠️ docs 里没有可用资料")
@@ -85,8 +93,10 @@ class ChatBot:
     def build_prompt(self, question, context):
         """只负责拼 prompt，不碰模型、不碰检索"""
         prompt = ("请只根据下面这些资料回答问题。资料里没有的内容，就回答「资料里没有」。\n"
-                f"资料：{context}\n"
-                f"问题：{question}")
+        "能用一句话答完就用一句话，不要编号、不要展开、不要解释理由。\n"
+        f"资料：{context}\n"
+        f"问题：{question}")
+
         return prompt
 
     def ask_with_files(self, question, session_id):
